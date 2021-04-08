@@ -23,15 +23,24 @@ set.seed(42)
 a. Write a function to simulate ```nsims``` of the sum of the square of five samples from a standard normal distribution using the built-in  ```rnorm``` function. i.e. $$ Y_i = x_1^2 + x_2^2 + x_3^2 + x_4^2 + x_5^2 $$  where $$ X \sim N(0,1) $$ \marginpar{(2)}
 
 ```{r}
-
+five_sample <- function(nsims){
+    results_vec <- vector()
+    for (i in 1:nsims){
+    y = rnorm(n=1)^2 + rnorm(n=1)^2 + rnorm(n=1)^2 + rnorm(n=1)^2 + rnorm(n=1)^2
+    results_vec[i] <- y
+    }
+    return(results_vec)
+}
 
 ```
 
 b. Using ```nsims = 10000```, generate nsims of the above and plot the empirical distribution. Title the plot with the name of the theoretical distribution that your empirical distribution should resemble, and add a vertical line on the plot of the mean value of the theoretical distribution. \marginpar{(3)}
 
 ```{r}
-
-
+result<-five_sample(nsims=10000)
+hist(result)
+mean(result)
+#Mean should be 5 = no of degrees of freedom?
 ```
 
 \vspace{20pt} 
