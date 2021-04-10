@@ -7,6 +7,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = F, message = F, include = F, warning=F)
+library(tidyverse)
 ```
 
 # Part B
@@ -38,9 +39,16 @@ b. Using ```nsims = 10000```, generate nsims of the above and plot the empirical
 
 ```{r}
 result<-five_sample(nsims=10000)
+as.data.frame(result)
 hist(result)
-mean(result)
+abline(v=5,col="blue",lwd=2)
+# mean(result)
+
+##ggplot version
+# ggplot(data = as.data.frame(result),aes(x=result))+geom_histogram() +geom_vline(xintercept=5, color="blue", size=0.5)
+
 #Mean should be 5 = no of degrees of freedom?
+#Add some nice labels and a legend
 ```
 
 \vspace{20pt} 
@@ -57,21 +65,32 @@ set.seed(121)
 a. WITHOUT using ```rexp``` or any of the other built-in exponential distribution functions, write a function ```exp_sim``` to simulate ```n_exp``` realizations of an exponential distribution with a rate parameter of 0.5. (You may use other built-in R functions). \marginpar{(2)}
 
 ```{r}
-
+exp_sim <- function(rate,n_exp){
+    exponential_rvs <- vector()
+    for (i in 1:n_exp) {
+        x <- -(1/rate)*log(1-runif(1,0,1))
+        exponential_rvs[i] <- x
+    }
+    return(exponential_rvs)
+}
 
 ```
 
 b. Use the function above and ```n_exp = 50000``` to work out $Var(X)$ using numerical integration. Save your answer as an object ```var_exp```. \marginpar{(2)}
 
 ```{r}
+samp <- exp_sim(rate=0.5,n_exp=50000)
+var_exp <- mean(samp^2) - mean(samp)^2
+var_exp
 
-
+#Check the real thing
+# var(samp)
 ```
 
 Now, use the function in (a) above to simulate ```n_exp = 100``` realizations of the specified exponential distribution to use as the sample data for questions (c) and (d) below. Save the data into an object called ```exp_data```.
 
 ```{r}
-
+exp_data <- exp_sim(rate=0.5,n_exp=100)
 
 ```
       
