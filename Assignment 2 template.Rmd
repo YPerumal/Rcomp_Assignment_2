@@ -97,7 +97,17 @@ exp_data <- exp_sim(rate=0.5,n_exp=100)
 c. Write a function to calculate the maximum likelihood estimate of an exponential distribution using the Newton-Raphson method and ```exp_data```. Hint: Use the log-likelihood of the exponential distribution. Make sure your code prints the value of the mle estimate when it is run. \marginpar{(6)}
 
 ```{r}
+#Log likelihood of an exponential distribution
+exploglik<- function(rate,x){
+    -sum(x=x,dexp(rate = rate,log = TRUE))
+}
 
+# Code the newton-raphson method
+nr <- function(rate_guess,data,tolerance){
+    
+}
+
+http://dept.stat.lsa.umich.edu/~kshedden/Courses/Stat406/Notes/likelihood.pdf
 
 ```
 
@@ -167,20 +177,50 @@ a. Write a function named ```flip``` that undertakes the sampling to output an a
 	 
 ```{r}
 
-
+flip <- function(){
+        x <- runif(1,0,1)
+        if(x>0.5){
+            flip_result <- 1 # Tails 
+        }else{
+            flip_result <- 0 # Heads
+        }
+    return(flip_result)
+}
+flip()
 ```
 
 b. Write a function named ```toss_to_TT``` that returns the number of tosses required for one experiment (i.e. until you observe two consecutive tails). \marginpar{(5)}} 
 	
 ```{r}
-
+# this gets two tails, but not consecutive tails
+toss_to_TT <- function(){
+    j<-vector()
+    #dummy guesses to get the loop to works
+    j[1]<-0 # first flip dummy
+    j[2]<-0 # second flip dummy
+    track<-3 #start
+    while ((j[track-1] +j[track-2])<2) {
+        j[track] <-flip()
+        track <- track +1
+    }
+    return(track-2)# subtract for first two dummy guesses
+    # return(j) # Checking actual toss results
+}
 
 ```
 
 c. Generate $10\;000$ random sequences using  ```toss_to_TT``` and store the results in an object named ```rand_TT```. Now estimate the mean number of tosses required until you observe three consecutive tails. (```mean_flips```) \marginpar{(2)}
 
 ```{r}
+# create a list to store sequences
+rand_TT <- vector()
 
+# Run the sim
+for (k in 1:10000) {
+    rand_TT[k]<- toss_to_TT()
+}
 
+mean_flips <- round(mean(rand_TT),0)
+mean_flips
 ```
 
