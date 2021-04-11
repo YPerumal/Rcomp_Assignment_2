@@ -180,7 +180,8 @@ Claims data (measured in thousands of Rands) for the company are stored in the f
 
 ```{r}
 #read in the data
-claims_data <- read_csv("claims_data.csv")
+cd <- read_csv("claims_data.csv")
+claims_data <- cd$daily #make it a vector
 head(claims_data)
 ```
 
@@ -192,17 +193,30 @@ tx <- function(params,x){
   sigma <- params[2]
   exp(-(x-mu)/sigma)
 }
-claims_data[500,][]
 
-eval_tx <-tx(c(25,2),x=claims_data[500,])
+eval_tx <-tx(c(25,2),x=claims_data[500])
 eval_tx
 ```
 
 b. Write a function to calculate the log-likelihood value. Name your function ```logl``` and include two arguments namely ```params``` and ```x```. Use ```optim``` to obtain the values of $\mu$ and $\sigma$ that maximizes the log-likelihood function. These values are termed the \textbf{maximum likelihood estimates} of $\mu$ and $\sigma$ and are denoted as $\hat \mu$ and $\hat \sigma$. Set the starting values of your ```optim``` call to the sample mean and standard deviation of the claims data. Store $\hat \mu$ and $\hat \sigma$ as an object named ```mle```. \marginpar{(6)}
 
 ```{r}
+logl <- function(params,x){
+  #multiply by negative to get negative loglik needed for mle
+  mu <- params[1]
+  sigma <- params[2]
+  n <- length(x)
+  y = (n*log(sigma)) - sum(log(tx(params,x))) + sum(tx(params,x))
+}
 
-
+# mle_gumbel <- optim(par = c(mean(claims_data),sd(claims_data)),fn=logl,x=claims_data)
+# mle_gumbel <- optim(par = c(mean(claims_data),sd(claims_data)),fn=logl,x=claims_data,method = "BFGS") #seems to converge to same with other methods
+mle_gumbel <- optim(par = c(mean(claims_data),sd(claims_data)),fn=logl,x=claims_data,method = "L-BFGS-B") #seems to converge to same as BFGS, going with this one/
+# mle_gumbel
+mu_hat<-mle_gumbel$par[1]
+sigma_hat<-mle_gumbel$par[2]
+mle <- c(mu_hat,sigma_hat)
+mle
 ```
 
 \vspace{20pt} 
