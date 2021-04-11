@@ -24,6 +24,8 @@ set.seed(42)
 a. Write a function to simulate ```nsims``` of the sum of the square of five samples from a standard normal distribution using the built-in  ```rnorm``` function. i.e. $$ Y_i = x_1^2 + x_2^2 + x_3^2 + x_4^2 + x_5^2 $$  where $$ X \sim N(0,1) $$ \marginpar{(2)}
 
 ```{r}
+# Create the function, returns a stored vector depending of length nsims.
+# Just used the same formula and creatd a loop, stored results
 five_sample <- function(nsims){
     results_vec <- vector()
     for (i in 1:nsims){
@@ -40,6 +42,7 @@ b. Using ```nsims = 10000```, generate nsims of the above and plot the empirical
 ```{r}
 result<-five_sample(nsims=10000)
 as.data.frame(result)
+
 #Plot with Base $
 # hist(result,la)
 # ?hist
@@ -48,12 +51,17 @@ as.data.frame(result)
 # mean(result)
 
 ##GGplot version
+#Read if you add squared standard normal RVs you get Chi_squared with deg of freedom = number of RVs.
+# Mean of chi squared = DoF
+
+
 ggplot(data = as.data.frame(result),aes(x=result))+
   geom_histogram() +
   geom_vline(xintercept=5, color="blue", size=0.5)+
-  labs(title = "Distribution Resembling the Chi-Squared Distribution")
-
-#Mean should be 5 = no of degrees of freedom?
+  labs(title = "Chi-Sqaured Distribution with 5 Degrees of Freedom",
+       subtitle = "Mean Value of Theoretical Distibution Displayed",
+       x = "Frequency")+scale_x_continuous(breaks = seq(0, 30, by = 5))+
+  
 #Add some nice labels and a legend
 ```
 
@@ -71,7 +79,8 @@ set.seed(121)
 a. WITHOUT using ```rexp``` or any of the other built-in exponential distribution functions, write a function ```exp_sim``` to simulate ```n_exp``` realizations of an exponential distribution with a rate parameter of 0.5. (You may use other built-in R functions). \marginpar{(2)}
 
 ```{r}
-exp_sim <- function(rate,n_exp){
+#Create function to sample from inverse CDF of exponential distribution, feeding in random values from a uniform distribution. 
+exp_sim <- function(rate=0.5,n_exp){
     exponential_rvs <- vector()
     for (i in 1:n_exp) {
         x <- -(1/rate)*log(1-runif(1,0,1))
@@ -85,9 +94,13 @@ exp_sim <- function(rate,n_exp){
 b. Use the function above and ```n_exp = 50000``` to work out $Var(X)$ using numerical integration. Save your answer as an object ```var_exp```. \marginpar{(2)}
 
 ```{r}
+#Sample frm the distribution
 samp <- exp_sim(rate=0.5,n_exp=50000)
+
+# using the simplification from the notes to calculate one dimensional integrals in Prac 14 and formula for variance being E(X^2)- E(X)^2
 var_exp <- mean(samp^2) - mean(samp)^2
-var_exp
+print("var_exp")
+print(var_exp)
 
 #Check the real thing
 # var(samp)
@@ -96,51 +109,39 @@ var_exp
 Now, use the function in (a) above to simulate ```n_exp = 100``` realizations of the specified exponential distribution to use as the sample data for questions (c) and (d) below. Save the data into an object called ```exp_data```.
 
 ```{r}
+#simulate using funciton and store it
 exp_data <- exp_sim(rate=0.5,n_exp=100)
 ```
       
 c. Write a function to calculate the maximum likelihood estimate of an exponential distribution using the Newton-Raphson method and ```exp_data```. Hint: Use the log-likelihood of the exponential distribution. Make sure your code prints the value of the mle estimate when it is run. \marginpar{(6)}
 
 ```{r}
-#Log likelihood of an exponential distribution
-# exploglik<- function(rate,x){
-#     -sum(dexp(x=x,rate = rate,log = TRUE))
-# }
-
-# Need to find the first and second derivatives of the log likelihood of an exponential distribution to be able to appyl Newtons method.
-
-# log likehood of exponential = N * log(lambda) - lambda*sum(x)
-#First deriv simplifies to 1/lmabda - x_bar
-# Second deriv is therefore 1
-
+# Need to find ratio of first and second derivatives of the negative log likelihood of an exponential distribution to be able to apply Newtons method. When the ratio is set to zero the first deriv is set to zero that should me a turning point(i.e max since negative loglik), using second deriv to check it's a global max.
 
 # Code the newton-raphson method
+  # first_deriv <- ((n/lambda) - (sum(x)/lambda^2))
+  # second_deriv <- ((-n/lambda^2) + (2*sum(x)/lambda^3))
 
-
-# http://dept.stat.lsa.umich.edu/~kshedden/Courses/Stat406/Notes/likelihood.pdf
-
-#FROM THE PRAC
 nr <- function(x,n,lambda,mu){
-  # first_deriv = -(n*lambda) + ((n*mean(x))/lambda^2)
-  # second_deriv = (n*lambda^-2) - ((2*n*mean(x))/lambda^3)
-  delta <- lambda*(lambda*mean(x)-1)
+  delta <- ((n/lambda) - (sum(x)/lambda^2))/((-n/lambda^2) + (2*sum(x)/lambda^3))
   res <- vector()
   i= 1
-  # while(abs(delta)>mu){
-  for(i in 1:10){
-    delta <- lambda*(lambda*mean(x)-1)
-    lambda <- lambda - delta
-    res[i] <- lambda
+  while(abs(delta)>mu){
+  # for(i in 1:20){
+    delta <-  ((n/lambda) - (sum(x)/lambda^2))/((-n/lambda^2) + (2*sum(x)/lambda^3))#Calc the new delta
+    lambda <- lambda - delta #Calc new lambda estimate
+    res[i] <- lambda #store lambda values
     print(lambda)
-    i <- i+1
+    i <- i+1 #iterate
   }
   return(res)
 }
 
-results <- nr(x = exp_data,n=length(exp_data),lambda= 3,mu=1)
-results  
+#Run Newtons Method
+results <- nr(x = exp_data,n=length(exp_data),lambda= 1,mu=0.0001)
+# results  
 print(tail(results,1))
-
+#Seems to converge. But I know it's not the right answer.
 
 #Deterministic(?dunno if I used that right) solution to compare answer.
 # 1/mean(exp_data)
@@ -150,16 +151,21 @@ print(tail(results,1))
 d. Use ```exp_data``` and ```optim``` to compute the maximum likelihood estimate of the exponential distribution. Make sure your code prints the value of the mle estimate, and the convergence value of the algorithm when it is run. \marginpar{(2)}
 
 ```{r}
+#Define the negative log likelihood function
 exploglik<- function(rate,x){
     -sum(dexp(x=x,rate = rate,log = TRUE))
 }
 
-res <- optim(par = 5, fn = exploglik, x=exp_data)
+#Use the optim function, feed required arguments, store parameters
+res <- optim(par = 1, fn = exploglik, x=exp_data)
 
+# res
 #MLE Estimate
+print("MLE Estimate")
 print(res$par)
 
 #Convergance Value
+print("Convergance Value")
 print(res$value)
 ```
 
@@ -182,37 +188,45 @@ Claims data (measured in thousands of Rands) for the company are stored in the f
 #read in the data
 cd <- read_csv("claims_data.csv")
 claims_data <- cd$daily #make it a vector
-head(claims_data)
+# head(claims_data)
 ```
 
 a. Write a function to calculate the value of $t(x)$. Name the function ```tx``` and use only two arguments, namely ```params``` and ```x```. The vector ```params``` contains the parameter values $\mu$ and $\sigma$ while ```x``` is the claims data. Evaluate your  ```tx``` function using the $500^{\textrm{th}}$ claim and set ```params = c(25, 2)```. Name the object ```eval_tx```. You should get a value of 1.268522. \marginpar{(3)}
 
 ```{r}
+#Create function as given with specified arguments
 tx <- function(params,x){
   mu <- params[1]
   sigma <- params[2]
   exp(-(x-mu)/sigma)
 }
 
+# Evaluate function at the required data point
 eval_tx <-tx(c(25,2),x=claims_data[500])
-eval_tx
+print("Tx Evaluated for 500th Claim")
+print(eval_tx)
 ```
 
 b. Write a function to calculate the log-likelihood value. Name your function ```logl``` and include two arguments namely ```params``` and ```x```. Use ```optim``` to obtain the values of $\mu$ and $\sigma$ that maximizes the log-likelihood function. These values are termed the \textbf{maximum likelihood estimates} of $\mu$ and $\sigma$ and are denoted as $\hat \mu$ and $\hat \sigma$. Set the starting values of your ```optim``` call to the sample mean and standard deviation of the claims data. Store $\hat \mu$ and $\hat \sigma$ as an object named ```mle```. \marginpar{(6)}
 
 ```{r}
 logl <- function(params,x){
-  #multiply by negative to get negative loglik needed for mle
+  #multiply by negative to get negative loglik needed for maximisation of function
   mu <- params[1]
   sigma <- params[2]
   n <- length(x)
   y = (n*log(sigma)) - sum(log(tx(params,x))) + sum(tx(params,x))
 }
 
+#Ran Optim with a few different menthods to compare
+
 # mle_gumbel <- optim(par = c(mean(claims_data),sd(claims_data)),fn=logl,x=claims_data)
+
 # mle_gumbel <- optim(par = c(mean(claims_data),sd(claims_data)),fn=logl,x=claims_data,method = "BFGS") #seems to converge to same with other methods
+
 mle_gumbel <- optim(par = c(mean(claims_data),sd(claims_data)),fn=logl,x=claims_data,method = "L-BFGS-B") #seems to converge to same as BFGS, going with this one/
-# mle_gumbel
+
+#Store results in required object
 mu_hat<-mle_gumbel$par[1]
 sigma_hat<-mle_gumbel$par[2]
 mle <- c(mu_hat,sigma_hat)
@@ -243,6 +257,7 @@ T H T H H T H T H H T H T T  #number of tosses = 14
 a. Write a function named ```flip``` that undertakes the sampling to output an appropriate numeric value if a ```tail``` is observed after the toss of a coin and another numeric value otherwise. 	\marginpar{(2)} 
 	 
 ```{r}
+#Function to simulate a coin flip. Returns 1 for Tails, 0 for Heads. Uses a uniform distr to sample, and cut of >0.5 to cutoff for tails (could have been <0.5 doesn't matter)
 
 flip <- function(){
         x <- runif(1,0,1)
@@ -253,19 +268,19 @@ flip <- function(){
         }
     return(flip_result)
 }
-flip()
+# flip()
 ```
 
 b. Write a function named ```toss_to_TT``` that returns the number of tosses required for one experiment (i.e. until you observe two consecutive tails). \marginpar{(5)}} 
 	
 ```{r}
-# this gets two tails, but not consecutive tails
 toss_to_TT <- function(){
     j<-vector()
-    #dummy guesses to get the loop to works
+    #dummy guesses to get the loop to work
     j[1]<-0 # first flip dummy
     j[2]<-0 # second flip dummy
-    track<-3 #start
+    track<-3 #start, used to track number of flips
+    #While condition check results of last two flips if tails. If you add both will equal 2 and break the loop
     while ((j[track-1] +j[track-2])<2) {
         j[track] <-flip()
         track <- track +1
@@ -274,6 +289,8 @@ toss_to_TT <- function(){
     # return(j) # Checking actual toss results
 }
 
+#Run the function
+# toss_to_TT()
 ```
 
 c. Generate $10\;000$ random sequences using  ```toss_to_TT``` and store the results in an object named ```rand_TT```. Now estimate the mean number of tosses required until you observe three consecutive tails. (```mean_flips```) \marginpar{(2)}
@@ -287,7 +304,9 @@ for (k in 1:10000) {
     rand_TT[k]<- toss_to_TT()
 }
 
-mean_flips <- round(mean(rand_TT),0)
+#Can't really have half a flip, so rounding up to nearest integer
+mean_flips <- ceiling(mean(rand_TT))
+print("mean number of tosses required until you observe two consecutive tails:")
 mean_flips
 ```
 
