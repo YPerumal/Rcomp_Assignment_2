@@ -40,12 +40,18 @@ b. Using ```nsims = 10000```, generate nsims of the above and plot the empirical
 ```{r}
 result<-five_sample(nsims=10000)
 as.data.frame(result)
-hist(result)
-abline(v=5,col="blue",lwd=2)
+#Plot with Base $
+# hist(result,la)
+# ?hist
+# abline(v=5,col="blue",lwd=2)
+
 # mean(result)
 
-##ggplot version
-# ggplot(data = as.data.frame(result),aes(x=result))+geom_histogram() +geom_vline(xintercept=5, color="blue", size=0.5)
+##GGplot version
+ggplot(data = as.data.frame(result),aes(x=result))+
+  geom_histogram() +
+  geom_vline(xintercept=5, color="blue", size=0.5)+
+  labs(title = "Distribution Resembling the Chi-Squared Distribution")
 
 #Mean should be 5 = no of degrees of freedom?
 #Add some nice labels and a legend
@@ -91,31 +97,70 @@ Now, use the function in (a) above to simulate ```n_exp = 100``` realizations of
 
 ```{r}
 exp_data <- exp_sim(rate=0.5,n_exp=100)
-
 ```
       
 c. Write a function to calculate the maximum likelihood estimate of an exponential distribution using the Newton-Raphson method and ```exp_data```. Hint: Use the log-likelihood of the exponential distribution. Make sure your code prints the value of the mle estimate when it is run. \marginpar{(6)}
 
 ```{r}
 #Log likelihood of an exponential distribution
-exploglik<- function(rate,x){
-    -sum(x=x,dexp(rate = rate,log = TRUE))
-}
+# exploglik<- function(rate,x){
+#     -sum(dexp(x=x,rate = rate,log = TRUE))
+# }
+
+# Need to find the first and second derivatives of the log likelihood of an exponential distribution to be able to appyl Newtons method.
+
+# log likehood of exponential = N * log(lambda) - lambda*sum(x)
+#First deriv simplifies to 1/lmabda - x_bar
+# Second deriv is therefore 1
+
 
 # Code the newton-raphson method
-nr <- function(rate_guess,data,tolerance){
-    
+
+
+# http://dept.stat.lsa.umich.edu/~kshedden/Courses/Stat406/Notes/likelihood.pdf
+
+#FROM THE PRAC
+nr <- function(x,n,lambda,mu){
+  # first_deriv = -(n*lambda) + ((n*mean(x))/lambda^2)
+  # second_deriv = (n*lambda^-2) - ((2*n*mean(x))/lambda^3)
+  delta <- lambda*(lambda*mean(x)-1)
+  res <- vector()
+  i= 1
+  # while(abs(delta)>mu){
+  for(i in 1:10){
+    delta <- lambda*(lambda*mean(x)-1)
+    lambda <- lambda - delta
+    res[i] <- lambda
+    print(lambda)
+    i <- i+1
+  }
+  return(res)
 }
 
-http://dept.stat.lsa.umich.edu/~kshedden/Courses/Stat406/Notes/likelihood.pdf
+results <- nr(x = exp_data,n=length(exp_data),lambda= 3,mu=1)
+results  
+print(tail(results,1))
+
+
+#Deterministic(?dunno if I used that right) solution to compare answer.
+# 1/mean(exp_data)
 
 ```
 
 d. Use ```exp_data``` and ```optim``` to compute the maximum likelihood estimate of the exponential distribution. Make sure your code prints the value of the mle estimate, and the convergence value of the algorithm when it is run. \marginpar{(2)}
 
 ```{r}
+exploglik<- function(rate,x){
+    -sum(dexp(x=x,rate = rate,log = TRUE))
+}
 
+res <- optim(par = 5, fn = exploglik, x=exp_data)
 
+#MLE Estimate
+print(res$par)
+
+#Convergance Value
+print(res$value)
 ```
 
 \vspace{20pt} 
