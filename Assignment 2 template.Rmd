@@ -179,15 +179,23 @@ Suppose that the daily claim (X) an insurance company faces can be modelled usin
 Claims data (measured in thousands of Rands) for the company are stored in the file named ```claimsdata.csv```. Save the data into your working directory and then read it into R. 
 
 ```{r}
-
-
+#read in the data
+claims_data <- read_csv("claims_data.csv")
+head(claims_data)
 ```
 
 a. Write a function to calculate the value of $t(x)$. Name the function ```tx``` and use only two arguments, namely ```params``` and ```x```. The vector ```params``` contains the parameter values $\mu$ and $\sigma$ while ```x``` is the claims data. Evaluate your  ```tx``` function using the $500^{\textrm{th}}$ claim and set ```params = c(25, 2)```. Name the object ```eval_tx```. You should get a value of 1.268522. \marginpar{(3)}
 
 ```{r}
+tx <- function(params,x){
+  mu <- params[1]
+  sigma <- params[2]
+  exp(-(x-mu)/sigma)
+}
+claims_data[500,][]
 
-
+eval_tx <-tx(c(25,2),x=claims_data[500,])
+eval_tx
 ```
 
 b. Write a function to calculate the log-likelihood value. Name your function ```logl``` and include two arguments namely ```params``` and ```x```. Use ```optim``` to obtain the values of $\mu$ and $\sigma$ that maximizes the log-likelihood function. These values are termed the \textbf{maximum likelihood estimates} of $\mu$ and $\sigma$ and are denoted as $\hat \mu$ and $\hat \sigma$. Set the starting values of your ```optim``` call to the sample mean and standard deviation of the claims data. Store $\hat \mu$ and $\hat \sigma$ as an object named ```mle```. \marginpar{(6)}
