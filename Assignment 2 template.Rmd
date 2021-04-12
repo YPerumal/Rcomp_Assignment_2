@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = F, message = F, include = F, warning=F)
+knitr::opts_chunk$set(echo = F,message = F, warning = F)
 library(tidyverse)
 ```
 
@@ -16,14 +16,14 @@ library(tidyverse)
 
 \marginpar{\bf{[5]}}
 
-```{r}
+```{r include=FALSE}
 #Please don't change or delete this chunk
 set.seed(42)
 ```
 
 a. Write a function to simulate ```nsims``` of the sum of the square of five samples from a standard normal distribution using the built-in  ```rnorm``` function. i.e. $$ Y_i = x_1^2 + x_2^2 + x_3^2 + x_4^2 + x_5^2 $$  where $$ X \sim N(0,1) $$ \marginpar{(2)}
 
-```{r}
+```{r include=FALSE}
 # Create the function, returns a stored vector depending of length nsims.
 # Just used the same formula and creatd a loop, stored results
 five_sample <- function(nsims){
@@ -40,7 +40,7 @@ b. Using ```nsims = 10000```, generate nsims of the above and plot the empirical
 
 ```{r echo=FALSE}
 result<-five_sample(nsims=10000)
-as.data.frame(result)
+# as.data.frame(result)
 
 #Plot with Base $
 # hist(result,la)
@@ -59,22 +59,23 @@ p <-ggplot(data = as.data.frame(result),aes(x=result))+
        subtitle = "Mean Value of Theoretical Distibution Displayed",
        x = "Frequency")+scale_x_continuous(breaks = seq(0, 30, by = 5))+
   scale_color_manual(name = "Legend", values = c("Mean" = "red"))
-```
 p
+```
+
 \vspace{20pt} 
 
 ## Question 3
 
 \marginpar{\bf{[12]}}
 
-```{r}
+```{r include=FALSE}
 #Please don't change or delete this chunk
 set.seed(121)
 ```
 
 a. WITHOUT using ```rexp``` or any of the other built-in exponential distribution functions, write a function ```exp_sim``` to simulate ```n_exp``` realizations of an exponential distribution with a rate parameter of 0.5. (You may use other built-in R functions). \marginpar{(2)}
 
-```{r}
+```{r include=FALSE}
 #Create function to sample from inverse CDF of exponential distribution, feeding in random values from a uniform distribution. 
 exp_sim <- function(rate=0.5,n_exp){
     exponential_rvs <- vector()
@@ -95,18 +96,16 @@ samp <- exp_sim(rate=0.5,n_exp=50000)
 
 # using the simplification from the notes to calculate one dimensional integrals in Prac 14 and formula for variance being E(X^2)- E(X)^2
 var_exp <- mean(samp^2) - mean(samp)^2
-print("var_exp")
-print(var_exp)
+print(paste("var_exp =",round(var_exp,4)))
+# round(var_exp,4)
 
 #Check the real thing
-# var(samp)
+var(samp)
 ```
-print("var_exp")
-print(var_exp)
 
 Now, use the function in (a) above to simulate ```n_exp = 100``` realizations of the specified exponential distribution to use as the sample data for questions (c) and (d) below. Save the data into an object called ```exp_data```.
 
-```{r}
+```{r include=FALSE}
 #simulate using funciton and store it
 exp_data <- exp_sim(rate=0.5,n_exp=100)
 ```
@@ -159,12 +158,10 @@ res <- optim(par = 1, fn = exploglik, x=exp_data)
 
 # res
 #MLE Estimate
-print("MLE Estimate")
-print(res$par)
+print(paste("MLE Estimate",round(res$par,6)))
 
 #Convergance Value
-print("Convergance Value")
-print(res$value)
+print(paste("Convergance Value",round(res$value,6)))
 ```
 
 
@@ -174,7 +171,7 @@ print(res$value)
 
 \marginpar{\bf{[9]}}
 
-```{r}
+```{r include=FALSE}
 #Please don't change or delete this chunk
 set.seed(123)
 ```
@@ -183,7 +180,7 @@ Suppose that the daily claim (X) an insurance company faces can be modelled usin
 
 Claims data (measured in thousands of Rands) for the company are stored in the file named ```claimsdata.csv```. Save the data into your working directory and then read it into R. 
 
-```{r}
+```{r include=FALSE}
 #read in the data
 cd <- read_csv("claims_data.csv")
 claims_data <- cd$daily #make it a vector
@@ -202,8 +199,9 @@ tx <- function(params,x){
 
 # Evaluate function at the required data point
 eval_tx <-tx(c(25,2),x=claims_data[500])
-print("Tx Evaluated for 500th Claim")
-print(eval_tx)
+
+
+print(paste("Tx Evaluated for 500th Claim",round(eval_tx,6)))
 ```
 
 b. Write a function to calculate the log-likelihood value. Name your function ```logl``` and include two arguments namely ```params``` and ```x```. Use ```optim``` to obtain the values of $\mu$ and $\sigma$ that maximizes the log-likelihood function. These values are termed the \textbf{maximum likelihood estimates} of $\mu$ and $\sigma$ and are denoted as $\hat \mu$ and $\hat \sigma$. Set the starting values of your ```optim``` call to the sample mean and standard deviation of the claims data. Store $\hat \mu$ and $\hat \sigma$ as an object named ```mle```. \marginpar{(6)}
@@ -229,7 +227,10 @@ mle_gumbel <- optim(par = c(mean(claims_data),sd(claims_data)),fn=logl,x=claims_
 mu_hat<-mle_gumbel$par[1]
 sigma_hat<-mle_gumbel$par[2]
 mle <- c(mu_hat,sigma_hat)
-mle
+# mle
+
+print(paste("Mu hat:",round(mle[1],6)))
+print(paste("Sigma hat:",round(mle[2],6)))
 ```
 
 \vspace{20pt} 
@@ -237,7 +238,7 @@ mle
 ## Question 5 
 \marginpar{\bf{[9]}} 
 
-```{r}
+```{r include=FALSE}
 #Please don't change or delete this chunk
 set.seed(100)
 ```
@@ -255,7 +256,7 @@ T H T H H T H T H H T H T T  #number of tosses = 14
 
 a. Write a function named ```flip``` that undertakes the sampling to output an appropriate numeric value if a ```tail``` is observed after the toss of a coin and another numeric value otherwise. 	\marginpar{(2)} 
 	 
-```{r}
+```{r include=FALSE}
 # V1
 #Function to simulate a coin flip. Returns 1 for Tails, 0 for Heads. Uses a uniform distr to sample, and cut of >0.5 to cutoff for tails.
 # flip <- function(){
@@ -273,12 +274,12 @@ flip <- function(){
     flip_result <- sample(c(0,1),size=1,prob = c(0.5,0.5),replace=TRUE)
     return(flip_result)
 }
-flip()
+# flip()
 ```
 
 b. Write a function named ```toss_to_TT``` that returns the number of tosses required for one experiment (i.e. until you observe two consecutive tails). \marginpar{(5)}} 
 	
-```{r}
+```{r include=FALSE}
 # toss_to_TT <- function(){
 #     j<-vector()
 #     #dummy guesses to get the loop to work
@@ -312,7 +313,7 @@ toss_to_TT <- function(){
 }
 
 #Run the function
-toss_to_TT()
+# toss_to_TT()
 ```
 
 c. Generate $10\;000$ random sequences using  ```toss_to_TT``` and store the results in an object named ```rand_TT```. Now estimate the mean number of tosses required until you observe three consecutive tails. (```mean_flips```) \marginpar{(2)}
@@ -325,14 +326,15 @@ rand_TT <- vector()
 for (k in 1:10000) {
     rand_TT[k]<- toss_to_TT()
 }
+
+#Tests
 #  max(rand_TT)
-# # ?? min should be 2?????
 # min(rand_TT)
 # mean(rand_TT)
 
 #Can't really have half a flip, so rounding up to nearest integer
 mean_flips <- ceiling(mean(rand_TT))
-print("mean number of tosses required until you observe two consecutive tails:")
-mean_flips
+print(paste("mean number of tosses required until you observe two consecutive tails=",mean_flips))
+# mean_flips
 ```
 
