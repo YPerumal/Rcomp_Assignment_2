@@ -40,17 +40,10 @@ b. Using ```nsims = 10000```, generate nsims of the above and plot the empirical
 
 ```{r echo=FALSE}
 result<-five_sample(nsims=10000)
-# as.data.frame(result)
-
-#Plot with Base $
-# hist(result,la)
-# ?hist
-# abline(v=5,col="blue",lwd=2)
-
-# mean(result)
 
 ##GGplot version
 #Read if you add squared standard normal RVs you get Chi_squared with deg of freedom = number of RVs.
+
 # Mean of chi squared = DoF
 p <-ggplot(data = as.data.frame(result),aes(x=result))+
   geom_histogram() +
@@ -59,6 +52,7 @@ p <-ggplot(data = as.data.frame(result),aes(x=result))+
        subtitle = "Mean Value of Theoretical Distibution Displayed",
        x = "Frequency")+scale_x_continuous(breaks = seq(0, 30, by = 5))+
   scale_color_manual(name = "Legend", values = c("Mean" = "red"))
+#Display the plot
 p
 ```
 
@@ -94,13 +88,27 @@ b. Use the function above and ```n_exp = 50000``` to work out $Var(X)$ using num
 #Sample frm the distribution
 samp <- exp_sim(rate=0.5,n_exp=50000)
 
-# using the simplification from the notes to calculate one dimensional integrals in Prac 14 and formula for variance being E(X^2)- E(X)^2
+print("using the approximation from the notes to calculate one dimensional integrals in Prac 14, and formula for variance being E(X^2)- E(X)^2")
 var_exp <- mean(samp^2) - mean(samp)^2
 print(paste("var_exp =",round(var_exp,4)))
 # round(var_exp,4)
 
-#Check the real thing
-var(samp)
+#Expecation X^2
+
+hx <- function(samp){ (samp^2)*0.5*exp(-0.5*samp) }
+ex2<-integrate(hx, lower=0, upper=Inf)
+#Expectation of X
+hx1 <- function(samp){ (samp)*0.5*exp(-0.5*samp) }
+ex<-integrate(hx1, lower=0, upper=Inf)
+
+print("*Chosen Answer : Using integrate()")
+var_exp = ex2$value - ex$value^2
+print(paste("var_exp =",round(var_exp,4)))
+
+# Theoretical variance from wikipedia
+# 1/(0.5)^2
+#Check the real thing for sample variance
+# var(samp)
 ```
 
 Now, use the function in (a) above to simulate ```n_exp = 100``` realizations of the specified exponential distribution to use as the sample data for questions (c) and (d) below. Save the data into an object called ```exp_data```.
@@ -119,28 +127,60 @@ c. Write a function to calculate the maximum likelihood estimate of an exponenti
   # first_deriv <- ((n/lambda) - (sum(x)/lambda^2))
   # second_deriv <- ((-n/lambda^2) + (2*sum(x)/lambda^3))
 
+# v1
+# nr <- function(x,n,lambda,mu){
+#   f1 <- ((n/lambda)-(n*sum(x)))
+#   f2 <- (-n/lambda^2)
+#   delta <- f1/f2#first guess
+#   res <- vector()
+#   i= 1
+#   while(abs(delta)>mu){
+#   # for(i in 1:20){
+#     f1 <- ((n/lambda)-(n*sum(x)))
+#     f2 <- (-n/lambda^2)
+#     delta <-  f1/f2#Calc the new delta
+#     lambda <- lambda - delta #Calc new lambda estimate
+#     res[i] <- lambda #store lambda values
+#     print(lambda)
+#     i <- i+1 #iterate
+#   }
+#   return(res)
+# }
+# 
+
+
+# v2
 nr <- function(x,n,lambda,mu){
-  delta <- ((n/lambda) - (sum(x)/lambda^2))/((-n/lambda^2) + (2*sum(x)/lambda^3))
+  f1 <- ((-n/lambda) + (sum(x)/lambda^2))
+  f2 <- ((-n/lambda^2) - (2*sum(x)/lambda^3))
+  delta <- f1/f2 #first guess
   res <- vector()
   i= 1
   while(abs(delta)>mu){
   # for(i in 1:20){
-    delta <-  ((n/lambda) - (sum(x)/lambda^2))/((-n/lambda^2) + (2*sum(x)/lambda^3))#Calc the new delta
+    f1 <- ((-n/lambda) + (sum(x)/lambda^2))
+    f2 <- ((-n/lambda^2) - (2*sum(x)/lambda^3))
+    delta <-  f1/f2#Calc the new delta
     lambda <- lambda - delta #Calc new lambda estimate
     res[i] <- lambda #store lambda values
-    print(lambda)
+    # print(lambda)
     i <- i+1 #iterate
   }
   return(res)
 }
 
 #Run Newtons Method
-results <- nr(x = exp_data,n=length(exp_data),lambda= 1,mu=0.0001)
+results <- nr(x = exp_data,n=length(exp_data),lambda= 5,mu=0.0001)
 # results  
-print(tail(results,1))
+
+print(paste("Result Of Newtons Method When it Converges:",tail(results,1)))
 #Seems to converge. But I know it's not the right answer.
 
+print("Method appear to give me the mean which is incorrect, but I know the inverse of this is the solution")
+print(paste("1/result=",tail(1/results,1)))
+
 #Deterministic(?dunno if I used that right) solution to compare answer.
+# mean(exp_data)
 # 1/mean(exp_data)
 
 ```
@@ -150,7 +190,7 @@ d. Use ```exp_data``` and ```optim``` to compute the maximum likelihood estimate
 ```{r echo=FALSE}
 #Define the negative log likelihood function
 exploglik<- function(rate,x){
-    -sum(dexp(x=x,rate = rate,log = TRUE))
+    sum(-dexp(x=x,rate = rate,log = TRUE))
 }
 
 #Use the optim function, feed required arguments, store parameters
@@ -257,19 +297,7 @@ T H T H H T H T H H T H T T  #number of tosses = 14
 a. Write a function named ```flip``` that undertakes the sampling to output an appropriate numeric value if a ```tail``` is observed after the toss of a coin and another numeric value otherwise. 	\marginpar{(2)} 
 	 
 ```{r include=FALSE}
-# V1
-#Function to simulate a coin flip. Returns 1 for Tails, 0 for Heads. Uses a uniform distr to sample, and cut of >0.5 to cutoff for tails.
-# flip <- function(){
-#         x <- runif(1,0,1)
-#         if(x>0.5){
-#             flip_result <- 1 # Tails 
-#         }else{
-#             flip_result <- 0 # Heads
-#         }
-#     return(flip_result)
-# }
-
-# V2
+# V2 # Cleaner way of doing it
 flip <- function(){
     flip_result <- sample(c(0,1),size=1,prob = c(0.5,0.5),replace=TRUE)
     return(flip_result)
@@ -280,22 +308,7 @@ flip <- function(){
 b. Write a function named ```toss_to_TT``` that returns the number of tosses required for one experiment (i.e. until you observe two consecutive tails). \marginpar{(5)}} 
 	
 ```{r include=FALSE}
-# toss_to_TT <- function(){
-#     j<-vector()
-#     #dummy guesses to get the loop to work
-#     j[1]<-0 # first flip dummy
-#     j[2]<-0 # second flip dummy
-#     track<-3 #start, used to track number of flips
-#     #While condition check results of last two flips if tails. If you add both will equal 2 and break the loop
-#     while ((j[track-1] +j[track-2])<2) {
-#         j[track] <-flip()
-#         track <- track +1
-#     }
-#     return(track-3)# subtract for first two dummy guesses
-#     # return(j) # Checking actual toss results
-# }
-
-#Current?
+#Current and last toss checked
 toss_to_TT <- function(){
     j<-vector()
     #dummy guesses to get the loop to work
@@ -306,7 +319,6 @@ toss_to_TT <- function(){
     while ((j[track] +j[track-1])<2) {
         track <- track +1
         j[track] <-flip()
-
     }
     return(track-2)# subtract for first two dummy guesses
     # return(j) # Checking actual toss results
@@ -326,11 +338,6 @@ rand_TT <- vector()
 for (k in 1:10000) {
     rand_TT[k]<- toss_to_TT()
 }
-
-#Tests
-#  max(rand_TT)
-# min(rand_TT)
-# mean(rand_TT)
 
 #Can't really have half a flip, so rounding up to nearest integer
 mean_flips <- ceiling(mean(rand_TT))
