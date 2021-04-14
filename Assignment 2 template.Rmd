@@ -23,7 +23,7 @@ set.seed(42)
 
 a. Write a function to simulate ```nsims``` of the sum of the square of five samples from a standard normal distribution using the built-in  ```rnorm``` function. i.e. $$ Y_i = x_1^2 + x_2^2 + x_3^2 + x_4^2 + x_5^2 $$  where $$ X \sim N(0,1) $$ \marginpar{(2)}
 
-```{r include=FALSE}
+```{r echo=TRUE}
 # Create the function, returns a stored vector depending of length nsims.
 # Just used the same formula and creatd a loop, stored results
 five_sample <- function(nsims){
@@ -69,7 +69,7 @@ set.seed(121)
 
 a. WITHOUT using ```rexp``` or any of the other built-in exponential distribution functions, write a function ```exp_sim``` to simulate ```n_exp``` realizations of an exponential distribution with a rate parameter of 0.5. (You may use other built-in R functions). \marginpar{(2)}
 
-```{r include=FALSE}
+```{r echo=TRUE}
 #Create function to sample from inverse CDF of exponential distribution, feeding in random values from a uniform distribution. 
 exp_sim <- function(rate=0.5,n_exp){
     exponential_rvs <- vector()
@@ -94,7 +94,6 @@ print(paste("var_exp =",round(var_exp,4)))
 # round(var_exp,4)
 
 #Expecation X^2
-
 hx <- function(samp){ (samp^2)*0.5*exp(-0.5*samp) }
 ex2<-integrate(hx, lower=0, upper=Inf)
 #Expectation of X
@@ -114,7 +113,7 @@ print(paste("var_exp =",round(var_exp,4)))
 Now, use the function in (a) above to simulate ```n_exp = 100``` realizations of the specified exponential distribution to use as the sample data for questions (c) and (d) below. Save the data into an object called ```exp_data```.
 
 ```{r include=FALSE}
-#simulate using funciton and store it
+#simulate using function and store it
 exp_data <- exp_sim(rate=0.5,n_exp=100)
 ```
       
@@ -124,43 +123,23 @@ c. Write a function to calculate the maximum likelihood estimate of an exponenti
 # Need to find ratio of first and second derivatives of the negative log likelihood of an exponential distribution to be able to apply Newtons method. When the ratio is set to zero the first deriv is set to zero that should me a turning point(i.e max since negative loglik), using second deriv to check it's a global max.
 
 # Code the newton-raphson method
-  # first_deriv <- ((n/lambda) - (sum(x)/lambda^2))
-  # second_deriv <- ((-n/lambda^2) + (2*sum(x)/lambda^3))
+  #my exponential dist given by (1/beta)exp(-x/beta) for x>=0
+  # first_deriv <- ((n/beta) - (sum(x)/beta^2))
+  # second_deriv <- ((-n/beta^2) + (2*sum(x)/beta^3))
+  # lambda paramaterised as 1/beta in my distribution ,invert final answer of NR method to get labda
 
-# v1
-# nr <- function(x,n,lambda,mu){
-#   f1 <- ((n/lambda)-(n*sum(x)))
-#   f2 <- (-n/lambda^2)
-#   delta <- f1/f2#first guess
-#   res <- vector()
-#   i= 1
-#   while(abs(delta)>mu){
-#   # for(i in 1:20){
-#     f1 <- ((n/lambda)-(n*sum(x)))
-#     f2 <- (-n/lambda^2)
-#     delta <-  f1/f2#Calc the new delta
-#     lambda <- lambda - delta #Calc new lambda estimate
-#     res[i] <- lambda #store lambda values
-#     print(lambda)
-#     i <- i+1 #iterate
-#   }
-#   return(res)
-# }
-# 
-
-
-# v2
+# v4
 nr <- function(x,n,lambda,mu){
-  f1 <- ((-n/lambda) + (sum(x)/lambda^2))
-  f2 <- ((-n/lambda^2) - (2*sum(x)/lambda^3))
+  f1 <- ((-n/lambda)+(sum(x)/lambda^2)) 
+  f2 <- ((n/lambda^2)-(2*sum(x)/lambda^3))
   delta <- f1/f2 #first guess
   res <- vector()
   i= 1
   while(abs(delta)>mu){
   # for(i in 1:20){
-    f1 <- ((-n/lambda) + (sum(x)/lambda^2))
-    f2 <- ((-n/lambda^2) - (2*sum(x)/lambda^3))
-    delta <-  f1/f2#Calc the new delta
+  f1 <- ((-n/lambda)+(sum(x)/lambda^2))
+  f2 <- ((n/lambda^2)-(2*sum(x)/lambda^3))
+    delta <-  f1/f2# Calc the new delta
     lambda <- lambda - delta #Calc new lambda estimate
     res[i] <- lambda #store lambda values
     # print(lambda)
@@ -169,15 +148,36 @@ nr <- function(x,n,lambda,mu){
   return(res)
 }
 
+#v5
+#using the standard formulation of exp dist and derivatives, doesnt seem to work though,
+# just bounces back and forth between 0.77 and 0.355. WOrks if I set initial lambda par = 1
+# nr <- function(x,n,lambda,mu){
+#   fx <- (n*log(lambda) - lambda*sum(x))
+#   f1 <- (n/lambda - sum(x))
+#   f2 <- (-n/lambda^2)
+#   delta <- f1/fx #first guess
+#   res <- vector()
+#   i= 1
+#   while(abs(delta)>mu){
+#   # for(i in 1:20){
+#   fx <- (n*log(lambda) - lambda*sum(x))
+#   f1 <- (n/lambda - sum(x))
+#   f2 <- (-n/lambda^2)
+#     delta <-  f1/fx#Calc the new delta
+#     lambda <- lambda - delta #Calc new lambda estimate
+#     res[i] <- lambda #store lambda values
+#     print(lambda)
+#     i <- i+1 #iterate
+#   }
+#   return(res)
+# }
+
+
 #Run Newtons Method
-results <- nr(x = exp_data,n=length(exp_data),lambda= 5,mu=0.0001)
-# results  
+results <- nr(x = exp_data,n=length(exp_data),lambda= 0.1,mu=0.0001)
 
-print(paste("Result Of Newtons Method When it Converges:",tail(results,1)))
-#Seems to converge. But I know it's not the right answer.
-
-print("Method appear to give me the mean which is incorrect, but I know the inverse of this is the solution")
-print(paste("1/result=",tail(1/results,1)))
+#invert parameter to get the MLE due to how I found that definition
+print(paste("The MLE is",round(1/tail(results,1),6)))
 
 #Deterministic(?dunno if I used that right) solution to compare answer.
 # mean(exp_data)
@@ -296,8 +296,9 @@ T H T H H T H T H H T H T T  #number of tosses = 14
 
 a. Write a function named ```flip``` that undertakes the sampling to output an appropriate numeric value if a ```tail``` is observed after the toss of a coin and another numeric value otherwise. 	\marginpar{(2)} 
 	 
-```{r include=FALSE}
+```{r echo=TRUE}
 # V2 # Cleaner way of doing it
+#Counting a 1 as a tails
 flip <- function(){
     flip_result <- sample(c(0,1),size=1,prob = c(0.5,0.5),replace=TRUE)
     return(flip_result)
@@ -307,7 +308,7 @@ flip <- function(){
 
 b. Write a function named ```toss_to_TT``` that returns the number of tosses required for one experiment (i.e. until you observe two consecutive tails). \marginpar{(5)}} 
 	
-```{r include=FALSE}
+```{r echo=TRUE}
 #Current and last toss checked
 toss_to_TT <- function(){
     j<-vector()
